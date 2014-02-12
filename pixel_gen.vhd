@@ -43,38 +43,45 @@ end pixel_gen;
 architecture sel_arch of pixel_gen is
 
 begin
-	process(switch_6, switch_7)
+	process(switch_6, switch_7, blank, column, row)
 	begin
-		if (blank = '1') then
-			r <= (others => '0');
-			g <= (others => '0');
-			b <= (others => '0');
-		else
-			if(switch_6 = '0') and (switch_7 = '0') then
-				if((column >= 270) and (column <= 300)) and ((row >= 160) and (row <= 320)) then 
+		r <= (others => '0');
+		g <= (others => '0');
+		b <= (others => '0');
+		
+		if (blank = '0') then
+		
+			if (switch_6 = '0') and (switch_7 = '0') then
+			
+				if ((column >= 195) and (column <= 265)) then
+				
+					if (row >= 120) and (row < 150) then
+						b <= (others => '1');
+					end if;
+					
+					if (row >= 210) and (row <= 240) then
+						b <= (others => '1');
+					end if;
+					
+				end if;
+				
+				if (((column >= 160) and (column < 195)) or ((column >= 265) and (column <= 300))) and ((row >= 120) and (row <= 360)) then
 					b <= (others => '1');
 				end if;
 				
-				if((column >= 210) and (column <= 240)) and ((row >= 160) and (row <= 320)) then
+				if ((column >= 340) and (column <= 375)) and ((row >= 120) and (row <= 360)) then
 					b <= (others => '1');
 				end if;
 				
-				if((column >= 240) and (column <= 240)) and (((row >= 224) and (row <= 256)) or ((row >= 288) and (row <= 320))) then
+				if ((row >= 120) and (row <= 150)) and ((column >= 340) and (column <= 480)) then
 					b <= (others => '1');
 				end if;
 				
-				if((column >= 340) and (column <= 370)) and ((row >= 160) and (row <= 320)) then 
+				if ((row >= 210) and (row <= 240)) and ((column >= 340) and (column <= 445)) then
 					b <= (others => '1');
 				end if;
 				
-				if((column >= 370) and (column <= 450)) and ((row >= 288) and (row <= 320)) then
-					b <= (others => '1');
-				end if;
-				
-				if((column >= 370) and (column <= 420)) and ((row >= 224) and (row <= 256)) then
-					b <= (others => '1');				
-				end if;
-				
+							
 			elsif(switch_6 = '1') and (switch_7 = '0') then
 				if(column > 150) then
 					r <= (others => '1');
@@ -85,7 +92,7 @@ begin
 				elsif(column >= 150) and (row >= 200) and (row <= 440) then
 					g <= "10001000";
 				end if;
-				
+					
 			elsif(switch_6 = '0') and (switch_7 = '1') then
 				if (column <=100) and (column >= 380) then
 					r <= (others => '1');
@@ -107,8 +114,11 @@ begin
 				elsif(column >= 150) and (row >= 200) and (row <= 440) then
 					g <= "00001000";
 				end if;
+				
 			end if;
+			
 		end if;
+		
 	end process;
 
 end sel_arch;
