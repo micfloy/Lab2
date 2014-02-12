@@ -51,14 +51,28 @@ begin
 			b <= (others => '0');
 		else
 			if(switch_6 = '0') and (switch_7 = '0') then
-				if(column < 150) then
-					r <= (others => '1');
-				elsif(column >= 150) and (row < 200) then
-					g <= (others => '1');
-				elsif(column >= 150) and (row > 440) then
+				if((column >= 270) and (column <= 300)) and ((row >= 160) and (row <= 320)) then 
 					b <= (others => '1');
-				elsif(column >= 150) and (row >= 200) and (row <= 440) then
-					g <= "10001000";
+				end if;
+				
+				if((column >= 210) and (column <= 240)) and ((row >= 160) and (row <= 320)) then
+					b <= (others => '1');
+				end if;
+				
+				if((column >= 240) and (column <= 240)) and (((row >= 224) and (row <= 256)) or ((row >= 288) and (row <= 320))) then
+					b <= (others => '1');
+				end if;
+				
+				if((column >= 340) and (column <= 370)) and ((row >= 160) and (row <= 320)) then 
+					b <= (others => '1');
+				end if;
+				
+				if((column >= 370) and (column <= 450)) and ((row >= 288) and (row <= 320)) then
+					b <= (others => '1');
+				end if;
+				
+				if((column >= 370) and (column <= 420)) and ((row >= 224) and (row <= 256)) then
+					b <= (others => '1');				
 				end if;
 				
 			elsif(switch_6 = '1') and (switch_7 = '0') then
