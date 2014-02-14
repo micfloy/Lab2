@@ -71,28 +71,34 @@ begin
 			
 				if (row >= 120) and (row < 150) then
 					b <= (others => '1');
+					r <= (others => '0');
 				end if;
 				
 				if (row >= 210) and (row <= 240) then
 					b <= (others => '1');
+					r <= (others => '0');
 				end if;
 				
 			end if;
 			
 			if (((column >= 160) and (column < 195)) or ((column >= 265) and (column <= 300))) and ((row >= 120) and (row <= 360)) then
 				b <= (others => '1');
+				r <= (others => '0');
 			end if;
 			
 			if ((column >= 340) and (column <= 375)) and ((row >= 120) and (row <= 360)) then
 				b <= (others => '1');
+				r <= (others => '0');
 			end if;
 			
 			if ((row >= 120) and (row <= 150)) and ((column >= 340) and (column <= 480)) then
 				b <= (others => '1');
+				r <= (others => '0');
 			end if;
 			
 			if ((row >= 210) and (row <= 240)) and ((column >= 340) and (column <= 445)) then
 				b <= (others => '1');
+				r <= (others => '0');
 			end if;	
 			
 		end if;
