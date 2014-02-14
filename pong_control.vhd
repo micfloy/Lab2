@@ -45,9 +45,7 @@ end pong_control;
 architecture moore of pong_control is
 
 -- Constants
-constant speed_x    : integer := 3;
-constant speed_y    : integer := 3;
-constant game_speed : integer := 1000;
+constant game_speed : integer := 500;
 constant	ball_r     : integer := 5;
 constant	screen_h   : integer := 480;
 constant	screen_w   : integer := 640;
@@ -103,13 +101,13 @@ begin
 				state_next <= update;
 
 			when update =>							
-					if (ball_y_reg + ball_r) >= screen_h then
+					if (ball_y_reg + ball_r) >= (screen_h - 1) then
 						state_next <= hit_top;
-					elsif (ball_y_reg <= 0) then
+					elsif (ball_y_reg <= 1) then
 						state_next <= hit_bot;
-					elsif (ball_x_reg <= 0) then
+					elsif (ball_x_reg <= 1) then
 						state_next <= hit_left;
-					elsif (ball_x_reg + ball_r) >= screen_w then
+					elsif (ball_x_reg + ball_r) >= (screen_w - 1) then
 						state_next <= hit_right;
 					elsif ((ball_x_reg <= paddle_w + 5) and ((ball_y_reg <= paddle_y_reg + paddle_h) or (ball_y_reg >= paddle_y_reg))) then
 						state_next <= hit_paddle;
@@ -170,15 +168,15 @@ begin
 				
 				when update =>					
 					if (x_dir_reg = '1') then
-						ball_x_next <= ball_x_reg + speed_x;
+						ball_x_next <= ball_x_reg + 1;
 					elsif (x_dir_reg = '0') then
-						ball_x_next <= ball_x_reg - to_unsigned(speed_x,11);
+						ball_x_next <= ball_x_reg - to_unsigned(1,11);
 					end if;
 					
 					if (y_dir_reg = '1') then
-						ball_y_next <= ball_y_reg + speed_y;
+						ball_y_next <= ball_y_reg + 1;
 					elsif (y_dir_reg = '0') then
-						ball_y_next <= ball_y_reg - to_unsigned(speed_y,11);
+						ball_y_next <= ball_y_reg - to_unsigned(1,11);
 					end if;
 					
 				when hit_top =>
