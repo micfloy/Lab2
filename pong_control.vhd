@@ -53,7 +53,7 @@ constant	paddle_w	  : integer := 10;
 constant	paddle_h   : integer := 60;
 	
 type game_state is
-	(idle, update, hit_top, hit_bot, hit_left, hit_right, hit_paddle, game_over);
+	(idle, update, hit_top, hit_bot, hit_left, hit_right, hit_paddle);
 	
 type button_state is
 	(idle, up_pushed, down_pushed, up_released, down_released);
@@ -68,7 +68,7 @@ type button_state is
 
 	signal count_reg, count_next : unsigned(10 downto 0);
 	
-	signal up_reg, down_reg, up_next, down_next : std_logic;
+	signal up_reg, down_reg, up_next, down_next, game_over, game_over_next : std_logic;
 	
 begin
 
@@ -109,84 +109,85 @@ begin
 	--button next state logic
 	process(clk, reset, up, down)
 	begin
-		case button_reg is
-			when idle =>
-				if (up = '1') then
-					button_next <= up_pushed;
-				end if;
-				if (down = '1') then
-					button_next <= down_pushed;
-				end if;
-			when up_pushed =>
-				if (up = '0' and count_reg >= game_speed) then
-					button_next <= up_released;
-				end if;
-			when down_pushed =>
-				if (down = '0' and count_reg >= game_speed) then
-					button_next <= down_released;
-				end if;
-			when up_released =>
-				button_next <= idle;
-			when down_released =>
-				button_next <= idle;
-		end case;
+	
+
+			case button_reg is
+				when idle =>
+					if (up = '1' and down = '0') then
+						button_next <= up_pushed;
+					elsif (down = '1' and up = '0') then
+						button_next <= down_pushed;
+					end if;
+				when up_pushed =>
+					if (up = '0' and count_reg >= game_speed) then
+						button_next <= up_released;
+					end if;
+				when down_pushed =>
+					if (down = '0' and count_reg >= game_speed) then
+						button_next <= down_released;
+					end if;
+				when up_released =>
+					button_next <= idle;
+				when down_released =>
+					button_next <= idle;
+			end case;
 	end process;
 						
 	-- next state logic						
 	process(reset, clk, state_reg, count_reg, ball_x_reg, ball_y_reg, paddle_y_reg)
 	begin	
-			
-		case state_reg is
-		
-			when idle =>
-				state_next <= update;
 
-			when update =>							
-					if (ball_y_reg + ball_r) >= (screen_h - 1) then
-						state_next <= hit_top;
-					elsif (ball_y_reg <= 0) then
-						state_next <= hit_bot;
-					elsif (ball_x_reg <= 0) then
-						state_next <= hit_left;
-					elsif (ball_x_reg + ball_r) >= (screen_w - 1) then
-						state_next <= hit_right;
-					elsif ((ball_x_reg <= paddle_w + 5) and ((ball_y_reg <= paddle_y_reg + paddle_h) and (ball_y_reg >= paddle_y_reg))) then
-						state_next <= hit_paddle;
-					else 
-						state_next <= idle;
-					end if;
+			case state_reg is
+			
+				when idle =>
+					state_next <= update;
+
+				when update =>							
+						if (ball_y_reg + ball_r) >= (screen_h - 1) then
+							state_next <= hit_top;
+						elsif (ball_y_reg <= 0) then
+							state_next <= hit_bot;
+						elsif (ball_x_reg <= 0) then
+							state_next <= hit_left;
+						elsif (ball_x_reg + ball_r) >= (screen_w - 1) then
+							state_next <= hit_right;
+						elsif ((ball_x_reg <= paddle_w + 5) and ((ball_y_reg <= paddle_y_reg + paddle_h) and (ball_y_reg >= paddle_y_reg))) then
+							state_next <= hit_paddle;
+						else 
+							state_next <= idle;
+						end if;
+						
+						
+				when hit_top =>
+					state_next <= update;
 					
+				when hit_bot =>
+					state_next <= update;
 					
-			when hit_top =>
-				state_next <= update;
-				
-			when hit_bot =>
-				state_next <= update;
-				
-			when hit_left =>
-				state_next <= game_over;
-				
-			when hit_right =>
-				state_next <= update;
-				
-			when hit_paddle =>
-				state_next <= update;
-				
-			when game_over =>
-				
-		end case;			
+				when hit_left =>
+					state_next <= update;
+					
+				when hit_right =>
+					state_next <= update;
+					
+				when hit_paddle =>
+					state_next <= update;
+					
+			end case;
 	
 	end process;
 	
 	process(reset, clk)
 	begin
 		if(reset = '1') then
+			game_over <= '0';
 			ball_x_reg <= to_unsigned(400,11);
 			ball_y_reg <= to_unsigned(200,11);
 			paddle_y_reg <= to_unsigned(200,11);
 			x_dir_reg <= '1';
 			y_dir_reg <= '1';
 		elsif (rising_edge(clk)) then
+			game_over <= game_over_next;
 			ball_x_reg <= ball_x_next;
 			ball_y_reg <= ball_y_next;
 			paddle_y_reg <= paddle_y_next;
@@ -230,7 +231,7 @@ begin
 		
 	
 	-- look-ahead output logic
-	process(state_next, count_reg, ball_x_reg, ball_y_reg, x_dir_reg, y_dir_reg, paddle_y_reg, up_reg, down_reg)
+	process(state_next, count_reg, ball_x_reg, ball_y_reg, x_dir_reg, y_dir_reg, paddle_y_reg, up_reg, down_reg, game_over)
 	begin
 		ball_x_next <= ball_x_reg;
 		ball_y_next <= ball_y_reg;
@@ -244,45 +245,48 @@ begin
 			
 				when idle =>
 				
-				when update =>					
-					if (x_dir_reg = '1') then
-						ball_x_next <= ball_x_reg + 1;
-					elsif (x_dir_reg = '0') then
-						ball_x_next <= ball_x_reg - to_unsigned(1,11);
-					end if;
+				when update =>	
+
+					--if (game_over = '0') then
 					
-					if (y_dir_reg = '1') then
-						ball_y_next <= ball_y_reg + 1;
-					elsif (y_dir_reg = '0') then
-						ball_y_next <= ball_y_reg - to_unsigned(1,11);
-					end if;
-					
-					-- Bounds checking for paddle
-					if paddle_y_reg < 5 then
-						paddle_y_next <= to_unsigned(0,11);
-					elsif paddle_y_reg > screen_h - to_unsigned(paddle_h,11) - to_unsigned(5,11) then
-						paddle_y_next <= screen_h - to_unsigned(paddle_h,11);
-					end if;
-					
-					if (up_reg = '1') and paddle_y_reg > 0 then
-						paddle_y_next <= paddle_y_reg - to_unsigned(5,11);
-					elsif (down_reg = '1')and (paddle_y_reg <= screen_h - to_unsigned(paddle_h,11)) then
-						paddle_y_next <= paddle_y_reg + to_unsigned(5,11);
-					end if;					
+						if (x_dir_reg = '1') then
+							ball_x_next <= ball_x_reg + 1;
+						elsif (x_dir_reg = '0') then
+							ball_x_next <= ball_x_reg - to_unsigned(1,11);
+						end if;
+						
+						if (y_dir_reg = '1') then
+							ball_y_next <= ball_y_reg + 1;
+						elsif (y_dir_reg = '0') then
+							ball_y_next <= ball_y_reg - to_unsigned(1,11);
+						end if;
+						
+						-- Bounds checking for paddle
+						if paddle_y_reg < 5 then
+							paddle_y_next <= to_unsigned(0,11);
+						elsif paddle_y_reg > screen_h - to_unsigned(paddle_h,11) - to_unsigned(5,11) then
+							paddle_y_next <= screen_h - to_unsigned(paddle_h,11);
+						end if;
+						
+						if up_reg = '1' and down_reg = '0' and paddle_y_reg > 0 then
+							paddle_y_next <= paddle_y_reg - to_unsigned(5,11);
+						elsif down_reg = '1' and up_reg = '0' and (paddle_y_reg <= screen_h - to_unsigned(paddle_h,11)) then
+							paddle_y_next <= paddle_y_reg + to_unsigned(5,11);
+						end if;	
+						
+			--	end if;
 					
 				when hit_top =>
 					y_dir_next <= '0';
 				when hit_bot =>
 					y_dir_next <= '1';
 				when hit_left =>
+					game_over_next <= '1';
 					x_dir_next <= '1';
 				when hit_right =>
 					x_dir_next <= '0';
 				when hit_paddle =>
 					x_dir_next <= '1';					
-				when game_over =>
-					ball_x_next <= ball_x_reg;
-					ball_y_next <= ball_y_reg;
 					
 			end case;
 		end if;
