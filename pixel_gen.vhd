@@ -30,9 +30,9 @@ use IEEE.NUMERIC_STD.ALL;
 --use UNISIM.VComponents.all;
 
 entity pixel_gen is
-	 generic ( PADDLE_W : unsigned(10 downto 0) := to_unsigned(20,11);
-				  PADDLE_H : unsigned(10 downto 0) := to_unsigned(60,11);
-				  BALL_R : unsigned(10 downto 0) := to_unsigned(20,11));
+	 generic ( PADDLE_W : integer := 10;
+				  PADDLE_H : integer := 60;
+				  BALL_R   : integer := 5);
     port ( row      : in unsigned(10 downto 0);
            column   : in unsigned(10 downto 0);
            blank    : in std_logic;
@@ -56,7 +56,7 @@ begin
 		
 		
 			-- Draws the ball and paddle
-			if ((column < PADDLE_W + 10) and (column > 10)) and ((row <= paddle_y + PADDLE_W) and (row >= paddle_y)) then
+			if ((column < PADDLE_W + 5) and (column > 5)) and ((row <= paddle_y + PADDLE_H) and (row >= paddle_y)) then
 				r <= (others => '1');
 			end if;
 			
