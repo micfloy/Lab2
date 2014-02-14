@@ -47,6 +47,7 @@ architecture moore of pong_control is
 -- Constants
 constant speed_x    : integer := 3;
 constant speed_y    : integer := 3;
+constant game_speed : integer := 1000;
 constant	ball_r     : integer := 5;
 constant	screen_h   : integer := 480;
 constant	screen_w   : integer := 640;
@@ -86,17 +87,9 @@ begin
 		end if;
 	end process;
 		
-	count_next <= (others => '0') when (v_completed = '1') and (count_reg > 1000) else
-						count_reg + 1 when (v_completed = '1') else
+	count_next <= count_reg + 1 when (v_completed = '1') and (count_reg < to_unsigned(game_speed,11)) else
+						(others => '0') when count_reg >= to_unsigned(game_speed,11) else
 						count_reg;
-	
---	ball_x_next <= ball_x_reg + 2 when (count_reg = 1000) and (x_dir_reg = '1') else
---					   ball_x_reg - 2 when (count_reg = 1000) and (x_dir_reg = '0') else
---					   ball_x_reg;
---
---	ball_y_next <= ball_y_reg + 2 when (count_reg = 1000) and (y_dir_reg = '1') else
---					   ball_y_reg - 2 when (count_reg = 1000) and (y_dir_reg = '0') else
---					   ball_y_reg;
 						
 	paddle_y_next <= paddle_y_reg;
 						
@@ -105,33 +98,38 @@ begin
 	begin	
 			
 		case state_reg is
+		
 			when idle =>
+				state_next <= update;
 
-					state_next <= update;
-
-			when update =>
-							
-					if (ball_y_reg >= screen_h) then
+			when update =>							
+					if (ball_y_reg + ball_r) >= screen_h then
 						state_next <= hit_top;
 					elsif (ball_y_reg <= 0) then
 						state_next <= hit_bot;
 					elsif (ball_x_reg <= 0) then
 						state_next <= hit_left;
-					elsif (ball_x_reg >= screen_w) then
+					elsif (ball_x_reg + ball_r) >= screen_w then
 						state_next <= hit_right;
 					elsif ((ball_x_reg <= paddle_w + 5) and ((ball_y_reg <= paddle_y_reg + paddle_h) or (ball_y_reg >= paddle_y_reg))) then
 						state_next <= hit_paddle;
 					else 
 						state_next <= idle;
 					end if;
+					
+					
 			when hit_top =>
 				state_next <= update;
+				
 			when hit_bot =>
 				state_next <= update;
+				
 			when hit_left =>
 				state_next <= update;
+				
 			when hit_right =>
 				state_next <= update;
+				
 			when hit_paddle =>
 				state_next <= update;
 				
@@ -164,10 +162,10 @@ begin
 		x_dir_next <= x_dir_reg;
 		y_dir_next <= y_dir_reg;
 		
-		if (count_reg >= 1000) then
+		if (count_reg >= game_speed) then
 		
 			case state_next is
-				
+			
 				when idle =>
 				
 				when update =>					
@@ -180,8 +178,9 @@ begin
 					if (y_dir_reg = '1') then
 						ball_y_next <= ball_y_reg + speed_y;
 					elsif (y_dir_reg = '0') then
-						ball_y_next <= ball_y_reg - to_unsigned(speed_y, 11);
+						ball_y_next <= ball_y_reg - to_unsigned(speed_y,11);
 					end if;
+					
 				when hit_top =>
 					y_dir_next <= '0';
 				when hit_bot =>
