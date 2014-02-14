@@ -99,7 +99,7 @@ begin
 				column => col_sig
 		   );
 	 
-    pong_control_inst : entity work.pong_control(meally)
+    pong_control_inst : entity work.pong_control(moore)
 			port map( 
 				clk => pixel_clk,
 				reset => reset,
