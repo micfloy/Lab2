@@ -56,10 +56,13 @@ begin
 		
 		
 			-- Draws the ball and paddle
-			if ((column < PADDLE_W + 5) and (column > 5)) and ((row <= paddle_y + PADDLE_H) and (row >= paddle_y)) then
+			
+			-- Paddle
+			if ((column < PADDLE_W + 5) and (column > 5)) and (row <= paddle_y + PADDLE_H) and (row >= paddle_y) then
 				r <= (others => '1');
 			end if;
 			
+			-- Ball
 			if ((column >= ball_x) and (column <= ball_x + BALL_R)) and ((row >= ball_y) and (row <= ball_y + BALL_R)) then
 				r <= (others => '1');
 			end if;

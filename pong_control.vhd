@@ -42,7 +42,7 @@ entity pong_control is
   );
 end pong_control;
 
-architecture moore of pong_control is
+architecture meally of pong_control is
 
 -- Constants
 constant game_speed : integer := 500;
@@ -63,7 +63,40 @@ type game_state is
 
 	signal count_reg, count_next : unsigned(10 downto 0);
 	
+	signal button_up_reg, button_down_reg, up_trigger, down_trigger : std_logic;
+	
 begin
+
+
+	process(clk,reset,up,down)
+	begin
+		if(reset = '1') then
+			button_up_reg <= '0';
+			button_down_reg <= '0';
+		elsif(rising_edge(clk)) then
+			if(up = '1') then
+			button_up_reg <= '1';
+			end if;
+			
+			if(down = '1') then
+			button_down_reg <= '1';
+			end if;
+		end if;
+	end process;
+	
+	process(clk,reset, up, down, button_up_reg, button_down_reg, count_reg)
+	begin
+		if(reset = '1') then
+			up_trigger <= '0';
+			down_trigger <= '0';
+		elsif(button_up_reg = '1' and up = '0' and count_reg = game_speed) then
+			up_trigger <= '1';
+			button_up_reg <= '0';
+		elsif(button_down_reg = '1' and down = '0' and count_reg = game_speed) then
+			down_trigger <= '1';
+			button_up_reg <= '0';
+		end if;
+	end process;
 	
 	-- state register
 	process(clk,reset)
@@ -89,8 +122,6 @@ begin
 						(others => '0') when count_reg >= to_unsigned(game_speed,11) else
 						count_reg;
 						
-	paddle_y_next <= paddle_y_reg;
-						
 	-- next state logic						
 	process(reset, clk, state_reg, count_reg, ball_x_reg, ball_y_reg, paddle_y_reg)
 	begin	
@@ -103,13 +134,13 @@ begin
 			when update =>							
 					if (ball_y_reg + ball_r) >= (screen_h - 1) then
 						state_next <= hit_top;
-					elsif (ball_y_reg <= 1) then
+					elsif (ball_y_reg <= 0) then
 						state_next <= hit_bot;
-					elsif (ball_x_reg <= 1) then
+					elsif (ball_x_reg <= 0) then
 						state_next <= hit_left;
 					elsif (ball_x_reg + ball_r) >= (screen_w - 1) then
 						state_next <= hit_right;
-					elsif ((ball_x_reg <= paddle_w + 5) and ((ball_y_reg <= paddle_y_reg + paddle_h) or (ball_y_reg >= paddle_y_reg))) then
+					elsif ((ball_x_reg <= paddle_w + 5) and ((ball_y_reg <= paddle_y_reg + paddle_h) and (ball_y_reg >= paddle_y_reg))) then
 						state_next <= hit_paddle;
 					else 
 						state_next <= idle;
@@ -153,7 +184,7 @@ begin
 	end process;
 	
 	-- look-ahead output logic
-	process(state_next, count_reg, ball_x_reg, ball_y_reg, x_dir_reg, y_dir_reg)
+	process(state_next, count_reg, ball_x_reg, ball_y_reg, x_dir_reg, y_dir_reg, up_trigger, down_trigger)
 	begin
 		ball_x_next <= ball_x_reg;
 		ball_y_next <= ball_y_reg;
@@ -179,6 +210,21 @@ begin
 						ball_y_next <= ball_y_reg - to_unsigned(1,11);
 					end if;
 					
+					-- Bounds checking for paddle
+					if paddle_y_reg < 5 then
+						paddle_y_next <= to_unsigned(0,11);
+					elsif paddle_y_reg > screen_h - to_unsigned(paddle_h,11) - to_unsigned(5,11) then
+						paddle_y_next <= screen_h - to_unsigned(paddle_h,11);
+					end if;
+					
+					if up_trigger = '1' and down_trigger = '0' and paddle_y_reg > 0 then
+						paddle_y_next <= paddle_y_reg - to_unsigned(5,11);
+						up_trigger <= '0';
+					elsif up_trigger = '0' and down_trigger = '1' and paddle_y_reg + paddle_h <= screen_h then
+						paddle_y_next <= paddle_y_reg + 5;
+						down_trigger <= '0';
+					end if;					
+					
 				when hit_top =>
 					y_dir_next <= '0';
 				when hit_bot =>
@@ -201,5 +247,5 @@ begin
 	paddle_y <= paddle_y_reg;
 
 
-end moore;
+end meally;
 
