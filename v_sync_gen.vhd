@@ -55,7 +55,7 @@ begin
 	-- state register
 	process(clk,reset)
 	begin
-		if (reset='1') then
+ 		if (reset='1') then
 			state_reg <= a_video;
 		elsif (rising_edge(clk)) then
 			state_reg <= state_next;
