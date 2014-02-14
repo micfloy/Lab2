@@ -136,7 +136,6 @@ begin
 			when f_porch =>
 				h_sync_next <= '1';
 				blank_next <= '1';
-				I mist
 			when sync_pulse =>
 				blank_next <= '1';
 
