@@ -55,11 +55,6 @@ constant	paddle_h   : integer := 60;
 type game_state is
 	(idle, update, hit_top, hit_bot, hit_left, hit_right, hit_paddle);
 	
-type button_state is
-	(idle, up_pushed, down_pushed, up_released, down_released);
-	
-	signal button_reg, button_next : button_state;
-	
 	signal state_reg, state_next : game_state;
 	
 	signal ball_x_reg, ball_y_reg, paddle_y_reg, ball_x_next, ball_y_next, paddle_y_next : unsigned(10 downto 0);
@@ -68,19 +63,27 @@ type button_state is
 
 	signal count_reg, count_next : unsigned(10 downto 0);
 	
-	signal up_reg, down_reg, up_next, down_next, game_over, game_over_next : std_logic;
+	signal game_over, game_over_next, up_pulse, down_pulse : std_logic;
 	
 begin
 
-	-- button state register
-	process(clk,reset)
-	begin
-		if( reset = '1') then
-			button_reg <= idle;
-		elsif (rising_edge(clk)) then
-			button_reg <= button_next;
-		end if;
-	end process;
+	up_button : entity work.button_module(moore)
+		port map(
+			clk => clk,
+			reset => reset,
+			v_completed => v_completed,
+			button => up,
+			button_pulse => up_pulse
+		);
+		
+		down_button : entity work.button_module(moore)
+		port map(
+			clk => clk,
+			reset => reset,
+			v_completed => v_completed,
+			button => down,
+			button_pulse => down_pulse
+		);
 	
 	-- state register
 	process(clk,reset)
@@ -106,32 +109,6 @@ begin
 						(others => '0') when count_reg >= to_unsigned(game_speed,11) else
 						count_reg;
 						
-	--button next state logic
-	process(clk, reset, up, down)
-	begin
-	
-
-			case button_reg is
-				when idle =>
-					if (up = '1' and down = '0') then
-						button_next <= up_pushed;
-					elsif (down = '1' and up = '0') then
-						button_next <= down_pushed;
-					end if;
-				when up_pushed =>
-					if (up = '0' and count_reg >= game_speed) then
-						button_next <= up_released;
-					end if;
-				when down_pushed =>
-					if (down = '0' and count_reg >= game_speed) then
-						button_next <= down_released;
-					end if;
-				when up_released =>
-					button_next <= idle;
-				when down_released =>
-					button_next <= idle;
-			end case;
-	end process;
 						
 	-- next state logic						
 	process(reset, clk, state_reg, count_reg, ball_x_reg, ball_y_reg, paddle_y_reg)
@@ -194,39 +171,7 @@ begin
 			x_dir_reg <= x_dir_next;
 			y_dir_reg <= y_dir_next;
 		end if;
-	end process;
-	
-	process (clk, reset)
-	begin
-		if(reset = '1') then
-			up_reg <= '0';
-			down_reg <= '0';
-		elsif(rising_edge(clk)) then
-			up_reg <= up_next;
-			down_reg <= down_next;
-		end if;
-	end process;
-	
-	-- look-ahead button logic
-	process(button_reg, button_next)
-	begin
-	
-		up_next <= '0';
-		down_next <= '0';
-	
-			case button_next is 
-			
-				when idle =>			
-				when up_pushed =>
-				when down_pushed =>
-				when up_released =>
-					up_next <= '1';
-				when down_released =>
-					down_next <= '1';
-			end case;
-		end process;
-					
-						
+	end process;		
 					
 		
 	
@@ -264,13 +209,13 @@ begin
 						-- Bounds checking for paddle
 						if paddle_y_reg < 5 then
 							paddle_y_next <= to_unsigned(0,11);
-						elsif paddle_y_reg > screen_h - to_unsigned(paddle_h,11) - to_unsigned(5,11) then
+						elsif paddle_y_reg > (screen_h - to_unsigned(paddle_h,11) - to_unsigned(5,11)) then
 							paddle_y_next <= screen_h - to_unsigned(paddle_h,11);
 						end if;
 						
-						if up_reg = '1' and down_reg = '0' and paddle_y_reg > 0 then
+						if up_pulse = '1' and down_pulse = '0' and paddle_y_reg > 0 then
 							paddle_y_next <= paddle_y_reg - to_unsigned(5,11);
-						elsif down_reg = '1' and up_reg = '0' and (paddle_y_reg <= screen_h - to_unsigned(paddle_h,11)) then
+						elsif down_pulse = '1' and up_pulse = '0' and (paddle_y_reg <= (screen_h - to_unsigned(paddle_h,11))) then
 							paddle_y_next <= paddle_y_reg + to_unsigned(5,11);
 						end if;	
 						
