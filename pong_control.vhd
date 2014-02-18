@@ -71,7 +71,6 @@ begin
 		port map(
 			clk => clk,
 			reset => reset,
-			v_completed => v_completed,
 			button => up,
 			button_pulse => up_pulse
 		);
@@ -80,7 +79,6 @@ begin
 		port map(
 			clk => clk,
 			reset => reset,
-			v_completed => v_completed,
 			button => down,
 			button_pulse => down_pulse
 		);
@@ -160,14 +158,12 @@ begin
 			game_over <= '0';
 			ball_x_reg <= to_unsigned(400,11);
 			ball_y_reg <= to_unsigned(200,11);
-			paddle_y_reg <= to_unsigned(200,11);
 			x_dir_reg <= '1';
 			y_dir_reg <= '1';
 		elsif (rising_edge(clk)) then
 			game_over <= game_over_next;
 			ball_x_reg <= ball_x_next;
 			ball_y_reg <= ball_y_next;
-			paddle_y_reg <= paddle_y_next;
 			x_dir_reg <= x_dir_next;
 			y_dir_reg <= y_dir_next;
 		end if;
@@ -176,7 +172,7 @@ begin
 		
 	
 	-- look-ahead output logic
-	process(state_next, count_reg, ball_x_reg, ball_y_reg, x_dir_reg, y_dir_reg, paddle_y_reg, up_reg, down_reg, game_over)
+	process(state_next, count_reg, ball_x_reg, ball_y_reg, x_dir_reg, y_dir_reg, paddle_y_reg, game_over)
 	begin
 		ball_x_next <= ball_x_reg;
 		ball_y_next <= ball_y_reg;
@@ -207,17 +203,17 @@ begin
 						end if;
 						
 						-- Bounds checking for paddle
-						if paddle_y_reg < 5 then
-							paddle_y_next <= to_unsigned(0,11);
-						elsif paddle_y_reg > (screen_h - to_unsigned(paddle_h,11) - to_unsigned(5,11)) then
-							paddle_y_next <= screen_h - to_unsigned(paddle_h,11);
-						end if;
-						
-						if up_pulse = '1' and down_pulse = '0' and paddle_y_reg > 0 then
-							paddle_y_next <= paddle_y_reg - to_unsigned(5,11);
-						elsif down_pulse = '1' and up_pulse = '0' and (paddle_y_reg <= (screen_h - to_unsigned(paddle_h,11))) then
-							paddle_y_next <= paddle_y_reg + to_unsigned(5,11);
-						end if;	
+--						if paddle_y_reg < 5 then
+--							paddle_y_next <= to_unsigned(0,11);
+--						elsif paddle_y_reg > (screen_h - to_unsigned(paddle_h,11) - to_unsigned(5,11)) then
+--							paddle_y_next <= screen_h - to_unsigned(paddle_h,11);
+--						end if;
+--						
+--						if up_pulse = '1' and down_pulse = '0' and paddle_y_reg > 0 then
+--							paddle_y_next <= paddle_y_reg - to_unsigned(5,11);
+--						elsif down_pulse = '1' and up_pulse = '0' and (paddle_y_reg <= (screen_h - to_unsigned(paddle_h,11))) then
+--							paddle_y_next <= paddle_y_reg + to_unsigned(5,11);
+--						end if;	
 						
 			--	end if;
 					
@@ -241,8 +237,21 @@ begin
 	
 	ball_x <= ball_x_reg;
 	ball_y <= ball_y_reg;
-	paddle_y <= paddle_y_reg;
 
+	paddle_y_next <= paddle_y_reg - 10 when up_pulse = '1' else
+							paddle_y_reg + 10 when down_pulse = '1' else
+							paddle_y_reg;
+
+	process(clk, reset)
+	begin
+		if reset = '1' then
+			paddle_y_reg <= to_unsigned(200, 11);
+		elsif rising_edge(clk) then
+			paddle_y_reg <= paddle_y_next;
+		end if;
+	end process;
+
+	paddle_y <= paddle_y_reg;
 
 end moore;
 

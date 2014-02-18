@@ -32,26 +32,75 @@ use IEEE.NUMERIC_STD.ALL;
 entity button_module is
     Port ( clk : in  STD_LOGIC;
            reset : in  STD_LOGIC;
-			  v_completed : in STD_LOGIC;
            button : in  STD_LOGIC;
            button_pulse : out  STD_LOGIC);
 end button_module;
 
 architecture moore of button_module is
 
-constant game_speed : integer := 500;
+	constant game_speed : integer := 500;
 
-type button_state is
-	(idle, button_pushed, button_released);
+	type button_state is
+	(idle, button_pushed, button_held);
 	
 	signal button_reg, button_next : button_state;
 	
-	signal count_reg, count_next : unsigned(10 downto 0);
+	signal count : unsigned(10 downto 0);
 	
-	signal pulse_reg, pulse_next : std_logic;
-
+	signal pulse_reg, pulse_next, button_old, button_new, button_debounced : std_logic;
 
 begin
+	-- count register
+--	process(reset, clk)
+--	begin
+--		if (reset = '1') then
+--			count_reg <= (others => '0');
+--		elsif (rising_edge(clk)) then
+--			count_reg <= count_next;
+--		end if;
+--	end process;
+--	
+--	count_next <= 	(others => '0') when count_reg >= to_unsigned(game_speed,11) else
+--						count_reg + 1;
+
+
+
+	-- shift register
+	process(clk,reset,button)
+	begin
+		if( reset = '1') then
+			button_old <= '0';
+		elsif(rising_edge(clk)) then
+			button_old <= button;
+		end if;
+	end process;
+	
+	process(clk,reset,button_old)
+	begin
+		
+		if( reset = '1') then
+			button_debounced <= '0';
+			count <= (others => '0');
+			button_new <= '0';			
+		elsif( rising_edge(clk)) then
+			if(button_new = button_old) then
+				count <= count + 1;
+			else
+				button_new <= button_old;
+				count <= (others => '0');
+				button_debounced <= '0';
+			end if;
+			
+			if( count >= 1000 ) then
+				button_debounced <= '1';
+				count <= '0';
+			end if;
+		end if;
+		
+	end process;
+
+
+
 
 	-- button state register
 	process(clk,reset)
@@ -63,20 +112,24 @@ begin
 		end if;
 	end process;
 	
-		-- count register
-	process(reset, clk)
+	process (button_reg, button)
 	begin
-		if (reset = '1') then
-			count_reg <= (others => '0');
-		elsif (rising_edge(clk)) then
-			count_reg <= count_next;
-		end if;
+		button_next <= button_reg;
+		
+		case button_reg is
+			when  idle =>
+				if(button = '1') then
+					button_next <= button_pushed;
+				end if;
+			when button_pushed =>
+				button_next <= button_held;
+			when button_held =>
+				if(button = '0') then
+					button_next <= idle;
+				end if;
+		end case;
+					
 	end process;
-	
-		count_next <= count_reg + 1 when (v_completed = '1') and (count_reg < to_unsigned(game_speed,11)) else
-						(others => '0') when count_reg >= to_unsigned(game_speed,11) else
-						count_reg;
-
 	
 	process (clk, reset)
 	begin
@@ -86,23 +139,11 @@ begin
 			pulse_reg <= pulse_next;
 		end if;
 	end process;	
-
-	-- look-ahead button logic
-	process(button_reg, button_next)
-	begin
 	
-		pulse_next <= '0';
-	
-			case button_next is 
-			
-				when idle =>			
-				when button_pushed =>
-				when button_released =>
-					pulse_next <= '1';
-			end case;
-		end process;
+	pulse_next <= 	'1' when button_next = button_pushed else
+						'0';
 
-button_pulse <= pulse_reg;
+	button_pulse <= pulse_reg;
 
 end moore;
 
