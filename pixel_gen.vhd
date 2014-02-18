@@ -34,7 +34,6 @@ entity pixel_gen is
     port ( row      : in unsigned(10 downto 0);
            column   : in unsigned(10 downto 0);
            blank    : in std_logic;
-			  switch_6 : in std_logic;
            ball_x   : in unsigned(10 downto 0);
 			  ball_y   : in unsigned(10 downto 0);
            paddle_y : in unsigned(10 downto 0);

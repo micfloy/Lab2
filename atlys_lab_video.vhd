@@ -33,7 +33,7 @@ entity atlys_lab_video is
     port ( 
              clk   : in  std_logic; -- 100 MHz
              reset : in  std_logic;
-				 SW6   : in  std_logic;
+				 SW7   : in  std_logic;
 				 up    : in  std_logic;
              down  : in  std_logic;
              tmds  : out std_logic_vector(3 downto 0);
@@ -99,12 +99,13 @@ begin
 				column => col_sig
 		   );
 	 
-    pong_control_inst : entity work.pong_control(moore)
+    pong_control_inst : entity work.pong_control(meally)
 			port map( 
 				clk => pixel_clk,
 				reset => reset,
 				up => up,
 				down => down,
+				switch => SW7,
 				v_completed => v_comp,
 				ball_x => ball_x,
 				ball_y => ball_y,
@@ -116,7 +117,6 @@ begin
 				row => row_sig, 
 				column => col_sig, 
 				blank => blank,
-				switch_6 => SW6,
 				ball_x => ball_x,
 				ball_y =>  ball_y,
 				paddle_y => paddle_y,

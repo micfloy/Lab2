@@ -35,6 +35,7 @@ entity pong_control is
           reset       : in std_logic;
           up          : in std_logic;
           down        : in std_logic;
+			 switch		 : in std_logic;
           v_completed : in std_logic;
           ball_x      : out unsigned(10 downto 0);
           ball_y      : out unsigned(10 downto 0);
@@ -42,10 +43,11 @@ entity pong_control is
   );
 end pong_control;
 
-architecture moore of pong_control is
+architecture meally of pong_control is
 
 -- Constants
-constant game_speed : integer := 500;
+constant slow 		  : integer := 500;
+constant fast 		  : integer := 250;
 constant	ball_r     : integer := 5;
 constant	screen_h   : integer := 480;
 constant	screen_w   : integer := 640;
@@ -62,7 +64,7 @@ type game_state is
 	
 	signal x_dir_reg, y_dir_reg, x_dir_next, y_dir_next : std_logic;
 
-	signal count_reg, count_next : unsigned(10 downto 0);
+	signal count_reg, count_next, game_speed : unsigned(10 downto 0);
 	
 	signal up_pulse, down_pulse, game_over_reg, game_over_next : std_logic;
 	
@@ -83,6 +85,10 @@ begin
 			button => down,
 			button_pulse => down_pulse
 		);
+		
+	-- Game speed settings
+	game_speed <= to_unsigned(fast,11) when switch = '1' else
+					  to_unsigned(slow,11);
 	
 	-- state register
 	process(clk,reset)
@@ -104,8 +110,8 @@ begin
 		end if;
 	end process;
 		
-	count_next <= count_reg + 1 when (v_completed = '1') and (count_reg < to_unsigned(game_speed,11)) else
-						(others => '0') when count_reg >= to_unsigned(game_speed,11) else
+	count_next <= count_reg + 1 when (v_completed = '1') and (count_reg < game_speed) else
+						(others => '0') when count_reg >= game_speed else
 						count_reg;
 						
 						
@@ -242,5 +248,5 @@ begin
 
 	paddle_y <= paddle_y_reg;
 
-end moore;
+end meally;
 
