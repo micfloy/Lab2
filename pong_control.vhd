@@ -53,11 +53,11 @@ constant	screen_h   : integer := 480;
 constant	screen_w   : integer := 640;
 constant	paddle_w	  : integer := 10;
 constant	paddle_h   : integer := 60;
-constant paddle_inc : integer := 15;
+constant paddle_inc : integer := 20;
 constant pad_offset : integer := 5;
 	
 type game_state is
-	(idle, update, hit_top, hit_bot, hit_left, hit_right, hit_paddle);
+	(idle, update, hit_top, hit_bot, hit_left, hit_right, hit_paddle_top, hit_paddle_bot);
 	
 	signal state_reg, state_next : game_state;
 	
@@ -68,8 +68,6 @@ type game_state is
 	signal count_reg, count_next, game_speed : unsigned(10 downto 0);
 	
 	signal up_pulse, down_pulse, game_over_reg, game_over_next : std_logic;
-	
-	signal angle_reg, angle_next : integer;
 	
 begin
 
@@ -138,7 +136,11 @@ begin
 					elsif (ball_x_reg + ball_r) >= (screen_w - 2) then
 						state_next <= hit_right;
 					elsif ((ball_x_reg <= paddle_w + pad_offset) and ((ball_y_reg <= paddle_y_reg + paddle_h) and (ball_y_reg >= paddle_y_reg))) then
-						state_next <= hit_paddle;
+						if (ball_y_reg >= paddle_y_reg) and (ball_y_reg < paddle_y_reg + paddle_h / 2) then
+							state_next <= hit_paddle_top;
+						elsif (ball_y_reg >= paddle_y_reg + (paddle_h / 2)) and (ball_y_reg <= paddle_y_reg + paddle_h) then
+							state_next <= hit_paddle_bot;
+						end if;
 					else 
 						state_next <= idle;
 					end if;
@@ -156,7 +158,10 @@ begin
 				when hit_right =>
 					state_next <= update;
 					
-				when hit_paddle =>
+				when hit_paddle_top =>
+					state_next <= update;
+					
+				when hit_paddle_bot =>
 					state_next <= update;
 					
 			end case;
@@ -200,9 +205,9 @@ begin
 				when update =>	
 					if(game_over_reg = '0') then
 						if (x_dir_reg = '1') then
-							ball_x_next <= ball_x_reg + angle_reg;
+							ball_x_next <= ball_x_reg + 1;
 						elsif (x_dir_reg = '0') then
-							ball_x_next <= ball_x_reg - to_unsigned(1,11) - to_unsigned(angle_reg,11);
+							ball_x_next <= ball_x_reg - to_unsigned(1,11);
 						end if;
 						
 						if (y_dir_reg = '1') then
@@ -221,8 +226,12 @@ begin
 					x_dir_next <= '1';
 				when hit_right =>
 					x_dir_next <= '0';
-				when hit_paddle =>
+				when hit_paddle_top =>
 					x_dir_next <= '1';
+					y_dir_next <= '0';
+				when hit_paddle_bot =>
+					x_dir_next <= '1';
+					y_dir_next <= '1';
 
 			end case;
 			
@@ -253,23 +262,7 @@ begin
 	end process;
 
 	paddle_y <= paddle_y_reg;
-	
-	
-	angle_next <= angle_reg when (ball_x_reg > paddle_w + pad_offset) or (ball_x_reg < pad_offset) else
-					  2 when (ball_y_reg >= paddle_y_reg) and (ball_y_reg < paddle_y_reg + (paddle_h / 3)) else
-					  1 when (ball_y_reg >= paddle_y_reg + (paddle_h / 3)) and (ball_y_reg < (paddle_h / 3)*2) else
-					  2 when (ball_y_reg >= paddle_y_reg + (paddle_h / 3)*2) and (ball_y_reg <= paddle_h) else
-					  angle_reg;
-					  
-	process(clk,reset)
-	begin
-		if reset = '1' then
-			angle_reg <= 1;
-		elsif rising_edge(clk) then
-			angle_reg <= angle_next;
-		end if;
-		
-	end process;
+
 
 end meally;
 
