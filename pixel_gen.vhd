@@ -30,9 +30,7 @@ use IEEE.NUMERIC_STD.ALL;
 --use UNISIM.VComponents.all;
 
 entity pixel_gen is
-	 generic ( PADDLE_W : integer := 10;
-				  PADDLE_H : integer := 60;
-				  BALL_R   : integer := 5);
+
     port ( row      : in unsigned(10 downto 0);
            column   : in unsigned(10 downto 0);
            blank    : in std_logic;
@@ -45,8 +43,12 @@ end pixel_gen;
 
 architecture sel_arch of pixel_gen is
 
+constant  PADDLE_W : integer := 10;
+constant  PADDLE_H : integer := 60;
+constant  BALL_R   : integer := 5;
+
 begin
-	process(blank, column, row)
+	process(blank, column, row, paddle_y,ball_x,ball_y)
 	begin
 		r <= (others => '0');
 		g <= (others => '0');
