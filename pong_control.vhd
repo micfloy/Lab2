@@ -46,8 +46,8 @@ end pong_control;
 architecture meally of pong_control is
 
 -- Constants
-constant slow 		  : integer := 500;
-constant fast 		  : integer := 250;
+constant slow 		  : integer := 400;
+constant fast 		  : integer := 150;
 constant	ball_r     : integer := 5;
 constant	screen_h   : integer := 480;
 constant	screen_w   : integer := 640;
