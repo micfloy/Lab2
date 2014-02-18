@@ -68,6 +68,8 @@ type game_state is
 	
 	signal up_pulse, down_pulse, game_over_reg, game_over_next : std_logic;
 	
+	signal angle_reg, angle_next : integer;
+	
 begin
 
 	up_button : entity work.button_module(moore)
@@ -180,7 +182,7 @@ begin
 		
 	
 	-- look-ahead output logic
-	process(state_next, count_reg, ball_x_reg, ball_y_reg, x_dir_reg, y_dir_reg, paddle_y_reg)
+	process(state_next, count_reg, ball_x_reg, ball_y_reg, x_dir_reg, y_dir_reg, paddle_y_reg, angle_reg)
 	begin
 		game_over_next <= game_over_reg;
 		ball_x_next <= ball_x_reg;
@@ -197,9 +199,9 @@ begin
 				when update =>	
 					if(game_over_reg = '0') then
 						if (x_dir_reg = '1') then
-							ball_x_next <= ball_x_reg + 1;
+							ball_x_next <= ball_x_reg + angle_reg;
 						elsif (x_dir_reg = '0') then
-							ball_x_next <= ball_x_reg - to_unsigned(1,11);
+							ball_x_next <= ball_x_reg - to_unsigned(1,11) - to_unsigned(angle_reg,11);
 						end if;
 						
 						if (y_dir_reg = '1') then
@@ -219,8 +221,10 @@ begin
 				when hit_right =>
 					x_dir_next <= '0';
 				when hit_paddle =>
-					x_dir_next <= '1';					
-					
+					x_dir_next <= '1';
+					if(ball_y_reg >= paddle_y_reg and ball_y_reg < (paddle_y_reg + (paddle_h / 3))) then
+					-------------------------
+					end if;
 			end case;
 		end if;
 	end process;
@@ -236,6 +240,7 @@ begin
 							paddle_y_reg - paddle_inc when up_pulse = '1' else
 							paddle_y_reg + paddle_inc when down_pulse = '1' else
 							paddle_y_reg;
+							
 
 	process(clk, reset)
 	begin
@@ -247,6 +252,16 @@ begin
 	end process;
 
 	paddle_y <= paddle_y_reg;
+	
+	process(clk,reset)
+	begin
+		if reset = '1' then
+			angle_reg <= 1;
+		elsif rising_edge(clk) then
+			angle_reg <= angle_next;
+		end if;
+		
+	end process;
 
 end meally;
 
