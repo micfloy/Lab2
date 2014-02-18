@@ -224,7 +224,8 @@ begin
 	ball_x <= ball_x_reg;
 	ball_y <= ball_y_reg;
 
-	paddle_y_next <=  to_unsigned(0,11) when (paddle_y_reg < paddle_inc) and (up_pulse = '1') else
+	paddle_y_next <=  paddle_y_reg when game_over_reg = '1' else
+							to_unsigned(0,11) when (paddle_y_reg < paddle_inc) and (up_pulse = '1') else
 							(screen_h - to_unsigned(paddle_h,11)) when (paddle_y_reg > (screen_h - to_unsigned(paddle_h,11) - to_unsigned(paddle_inc,11))) and (down_pulse = '1') else
 							paddle_y_reg - paddle_inc when up_pulse = '1' else
 							paddle_y_reg + paddle_inc when down_pulse = '1' else
