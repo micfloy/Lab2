@@ -54,6 +54,7 @@ constant	screen_w   : integer := 640;
 constant	paddle_w	  : integer := 10;
 constant	paddle_h   : integer := 60;
 constant paddle_inc : integer := 15;
+constant pad_offset : integer := 5;
 	
 type game_state is
 	(idle, update, hit_top, hit_bot, hit_left, hit_right, hit_paddle);
@@ -132,11 +133,11 @@ begin
 						state_next <= hit_top;
 					elsif (ball_y_reg <= 0) then
 						state_next <= hit_bot;
-					elsif (ball_x_reg <= 0) then
+					elsif (ball_x_reg <= 2) then
 						state_next <= hit_left;
-					elsif (ball_x_reg + ball_r) >= (screen_w - 1) then
+					elsif (ball_x_reg + ball_r) >= (screen_w - 2) then
 						state_next <= hit_right;
-					elsif ((ball_x_reg <= paddle_w + 5) and ((ball_y_reg <= paddle_y_reg + paddle_h) and (ball_y_reg >= paddle_y_reg))) then
+					elsif ((ball_x_reg <= paddle_w + pad_offset) and ((ball_y_reg <= paddle_y_reg + paddle_h) and (ball_y_reg >= paddle_y_reg))) then
 						state_next <= hit_paddle;
 					else 
 						state_next <= idle;
@@ -182,7 +183,7 @@ begin
 		
 	
 	-- look-ahead output logic
-	process(state_next, count_reg, ball_x_reg, ball_y_reg, x_dir_reg, y_dir_reg, paddle_y_reg, angle_reg)
+	process(state_next, ball_x_reg, ball_y_reg, x_dir_reg, y_dir_reg)
 	begin
 		game_over_next <= game_over_reg;
 		ball_x_next <= ball_x_reg;
@@ -222,11 +223,11 @@ begin
 					x_dir_next <= '0';
 				when hit_paddle =>
 					x_dir_next <= '1';
-					if(ball_y_reg >= paddle_y_reg and ball_y_reg < (paddle_y_reg + (paddle_h / 3))) then
-					-------------------------
-					end if;
+
 			end case;
+			
 		end if;
+		
 	end process;
 		
 	
@@ -253,6 +254,13 @@ begin
 
 	paddle_y <= paddle_y_reg;
 	
+	
+	angle_next <= angle_reg when (ball_x_reg > paddle_w + pad_offset) or (ball_x_reg < pad_offset) else
+					  2 when (ball_y_reg >= paddle_y_reg) and (ball_y_reg < paddle_y_reg + (paddle_h / 3)) else
+					  1 when (ball_y_reg >= paddle_y_reg + (paddle_h / 3)) and (ball_y_reg < (paddle_h / 3)*2) else
+					  2 when (ball_y_reg >= paddle_y_reg + (paddle_h / 3)*2) and (ball_y_reg <= paddle_h) else
+					  angle_reg;
+					  
 	process(clk,reset)
 	begin
 		if reset = '1' then
