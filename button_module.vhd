@@ -38,31 +38,16 @@ end button_module;
 
 architecture moore of button_module is
 
-	constant game_speed : integer := 500;
-
 	type button_state is
 	(idle, button_pushed, button_held);
 	
 	signal button_reg, button_next : button_state;
 	
-	signal count : unsigned(10 downto 0);
+	signal count : unsigned(12 downto 0);
 	
 	signal pulse_reg, pulse_next, button_old, button_new, button_debounced : std_logic;
 
 begin
-	-- count register
---	process(reset, clk)
---	begin
---		if (reset = '1') then
---			count_reg <= (others => '0');
---		elsif (rising_edge(clk)) then
---			count_reg <= count_next;
---		end if;
---	end process;
---	
---	count_next <= 	(others => '0') when count_reg >= to_unsigned(game_speed,11) else
---						count_reg + 1;
-
 
 
 	-- shift register
@@ -79,21 +64,22 @@ begin
 	begin
 		
 		if( reset = '1') then
-			button_debounced <= '0';
 			count <= (others => '0');
 			button_new <= '0';			
 		elsif( rising_edge(clk)) then
+		
+			button_debounced <= '0';
+			
 			if(button_new = button_old) then
 				count <= count + 1;
 			else
 				button_new <= button_old;
 				count <= (others => '0');
-				button_debounced <= '0';
 			end if;
 			
-			if( count >= 1000 ) then
+			if( count >= 5000 ) then
 				button_debounced <= '1';
-				count <= '0';
+				count <= (others => '0');
 			end if;
 		end if;
 		
@@ -112,7 +98,7 @@ begin
 		end if;
 	end process;
 	
-	process (button_reg, button)
+	process(button_reg,button,button_debounced)
 	begin
 		button_next <= button_reg;
 		
@@ -124,7 +110,7 @@ begin
 			when button_pushed =>
 				button_next <= button_held;
 			when button_held =>
-				if(button = '0') then
+				if(button = '0' and button_debounced = '1') then
 					button_next <= idle;
 				end if;
 		end case;

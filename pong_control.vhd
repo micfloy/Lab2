@@ -51,6 +51,7 @@ constant	screen_h   : integer := 480;
 constant	screen_w   : integer := 640;
 constant	paddle_w	  : integer := 10;
 constant	paddle_h   : integer := 60;
+constant paddle_inc : integer := 15;
 	
 type game_state is
 	(idle, update, hit_top, hit_bot, hit_left, hit_right, hit_paddle);
@@ -155,13 +156,13 @@ begin
 	process(reset, clk)
 	begin
 		if(reset = '1') then
-			game_over <= '0';
+			--game_over <= '0';
 			ball_x_reg <= to_unsigned(400,11);
 			ball_y_reg <= to_unsigned(200,11);
 			x_dir_reg <= '1';
 			y_dir_reg <= '1';
 		elsif (rising_edge(clk)) then
-			game_over <= game_over_next;
+			--game_over <= game_over_next;
 			ball_x_reg <= ball_x_next;
 			ball_y_reg <= ball_y_next;
 			x_dir_reg <= x_dir_next;
@@ -172,13 +173,12 @@ begin
 		
 	
 	-- look-ahead output logic
-	process(state_next, count_reg, ball_x_reg, ball_y_reg, x_dir_reg, y_dir_reg, paddle_y_reg, game_over)
+	process(state_next, count_reg, ball_x_reg, ball_y_reg, x_dir_reg, y_dir_reg, paddle_y_reg)
 	begin
 		ball_x_next <= ball_x_reg;
 		ball_y_next <= ball_y_reg;
 		x_dir_next <= x_dir_reg;
 		y_dir_next <= y_dir_reg;
-		paddle_y_next <= paddle_y_reg;
 		
 		if (count_reg >= game_speed) then
 		
@@ -222,7 +222,7 @@ begin
 				when hit_bot =>
 					y_dir_next <= '1';
 				when hit_left =>
-					game_over_next <= '1';
+					--game_over_next <= '1';
 					x_dir_next <= '1';
 				when hit_right =>
 					x_dir_next <= '0';
@@ -238,8 +238,10 @@ begin
 	ball_x <= ball_x_reg;
 	ball_y <= ball_y_reg;
 
-	paddle_y_next <= paddle_y_reg - 10 when up_pulse = '1' else
-							paddle_y_reg + 10 when down_pulse = '1' else
+	paddle_y_next <=  to_unsigned(0,11) when (paddle_y_reg < paddle_inc) and (up_pulse = '1') else
+							(screen_h - to_unsigned(paddle_h,11)) when (paddle_y_reg > (screen_h - to_unsigned(paddle_h,11) - to_unsigned(paddle_inc,11))) and (down_pulse = '1') else
+							paddle_y_reg - paddle_inc when up_pulse = '1' else
+							paddle_y_reg + paddle_inc when down_pulse = '1' else
 							paddle_y_reg;
 
 	process(clk, reset)
